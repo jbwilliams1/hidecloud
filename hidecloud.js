@@ -109,10 +109,6 @@ if (jQuery) {
 		localStorage.hiddenTracks = JSON.stringify(hiddenTracks);
 		populateHiddenList();
 		$('a.show-hidden').slideDown();
-		
-		console.log($('.playbackSoundBadge__title').attr('href'));
-		console.log(href);
-		
 	}
 	
 	function unhideTrack(href, songName) {
