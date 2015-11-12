@@ -2,19 +2,21 @@
 var hiddenTracks, numVisible; 
 hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
-var playingObserver = new MutationObserver(function(mutations) {
 
+function parsePlaylistHref(href) {
+	var isInPlayList = href.indexOf("?in=") > -1;
+	if(isInPlayList) { // Determine if the track is part of a hidden playlist
+		href = href.split("?in=")[1]; // Grab the playlist name
+		href = (href[0] !== '/') ? '/' + href : href; // Add a leading '/' in case one doesn't exist
+	}
+	return href;
+}
+
+var playingObserver = new MutationObserver(function(mutations) {
 	mutations.forEach(function(mutation) {
 		var href =$('.playbackSoundBadge__title').attr('href');
-		if(href) {
-			var isInPlayList = href.indexOf("?in=") > -1;
-			if(isInPlayList) { // Determine if the track is part of a hidden playlist
-				href = href.split("?in=")[1]; // Grab the playlist name
-				href = (href[0] !== '/') ? '/' + href : href; // Add a leading '/' in case one doesn't exist
-			}
-			if(href in hiddenTracks) {
-				nextSong();
-			}
+		if(href && parsePlaylistHref(href) in hiddenTracks) {
+			nextSong();
 		}
 	});
 });
