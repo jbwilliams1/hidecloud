@@ -8,6 +8,7 @@
 	border-radius: 5px;
 	padding: 5px;
 	display: none;
+	z-index: 99999;
 }
 
 .hidden-songs li {	
