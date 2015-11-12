@@ -112,11 +112,10 @@ if (jQuery) {
 	function hideTrack(e) {
 		var href, listItem, songName;
 		href = e.attr('data-href');
-		
+
 		songName = e.attr('data-track');
 		listItem = e.closest('li.soundList__item');
 
-		console.log(hiddenTracks);
 		numVisible--;
 		hiddenTracks[href] = songName;
 		listItem.slideUp();
