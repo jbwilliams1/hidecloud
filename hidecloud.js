@@ -2,13 +2,23 @@
 var hiddenTracks, numVisible; 
 hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
-var playingObserver = new MutationObserver(function(mutations) {		
+var playingObserver = new MutationObserver(function(mutations) {
+
 	mutations.forEach(function(mutation) {
-		if ($('.playbackSoundBadge__title').attr('href') in hiddenTracks) {
-			nextSong();
+		var href =$('.playbackSoundBadge__title').attr('href');
+		if(href) {
+			var isInPlayList = href.indexOf("?in=") > -1;
+			if(isInPlayList) { // Determine if the track is part of a hidden playlist
+				href = href.split("?in=")[1]; // Grab the playlist name
+				href = (href[0] !== '/') ? '/' + href : href; // Add a leading '/' in case one doesn't exist
+			}
+			if(href in hiddenTracks) {
+				nextSong();
+			}
 		}
 	});
 });
+
 var currentPlaying = document.querySelector('.playControls');					
 playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
 
@@ -96,13 +106,17 @@ if (jQuery) {
 		$('.show-hidden').text('You have hidden tracks! Click to see them'); 		
 	}
 
-	//Hides the track and adds the track name to the localStorage object 
+	//Hides the track and adds the track name to the localStorage object
+
+
 	function hideTrack(e) {
 		var href, listItem, songName;
 		href = e.attr('data-href');
+		
 		songName = e.attr('data-track');
 		listItem = e.closest('li.soundList__item');
 
+		console.log(hiddenTracks);
 		numVisible--;
 		hiddenTracks[href] = songName;
 		listItem.slideUp();
