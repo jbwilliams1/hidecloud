@@ -2,6 +2,35 @@
 var hiddenTracks, numVisible; 
 hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
+// Keeps tabs on the direction a user is skipping through
+// tracks in their stream.  When it comes time to skip a track,
+// we can decide which button (next/previous) in playControls we
+// want to trigger.
+var TrackSkipper = function() {
+	this.SKIP_FORWARD = 1;
+	this.SKIP_BACKWARD = -1;
+	var _skipDirection = this.SKIP_FORWARD;
+
+	this.setDirectionAsync = function(dir) {
+		return function() {
+			_skipDirection = dir;
+		}
+	};
+
+	this.getDirection = function() {
+		return _skipDirection;
+	};
+
+	this.skip = function() {
+		if(this.getDirection() === this.SKIP_FORWARD) {
+			$('.playControls .skipControl__next').trigger('click');
+		} else {
+			$('.playControls .skipControl__previous').trigger('click');
+		}
+	};
+};
+
+var trackSkipper = new TrackSkipper();
 
 function parsePlaylistHref(href) {
 	var isInPlayList = href.indexOf("?in=") > -1;
@@ -14,12 +43,19 @@ function parsePlaylistHref(href) {
 
 var playingObserver = new MutationObserver(function(mutations) {
 	mutations.forEach(function(mutation) {
-		var href =$('.playbackSoundBadge__title').attr('href');
-		if(href && parsePlaylistHref(href) in hiddenTracks) {
-			nextSong();
+		var songTitle = document.querySelector('.playbackSoundBadge__title');
+
+		// Only check hidden tracks if songTitle is a descendant
+		// of the mutation target element.
+		if($.contains(mutation.target, songTitle)) {
+			var href = $(songTitle).attr('href');
+			if(href && parsePlaylistHref(href) in hiddenTracks) {
+				trackSkipper.skip(); // It's a hidden track, skip it.
+			}
 		}
 	});
 });
+
 
 var currentPlaying = document.querySelector('.playControls');					
 playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
@@ -47,6 +83,8 @@ if (jQuery) {
 		$('body').on('click', 'a.unhide-track', function() {
 			unhideTrack($(this).data('href'), $(this).data('track'));
 		});
+
+
 		
 		//Every time you scroll, this checks to see if the saved number of visible tracks is less than what searching the dom comes up with 
 		$(document).scroll(function(){ 
@@ -55,7 +93,11 @@ if (jQuery) {
 				iterateItems(hiddenTracks);
 			}
 		});
-				
+
+		$('.playControls .skipControl__next').on('click', trackSkipper.setDirectionAsync(trackSkipper.SKIP_FORWARD));
+		$('.playControls .skipControl__previous').on('click', trackSkipper.setDirectionAsync(trackSkipper.SKIP_BACKWARD));
+
+
 		if (Object.keys(hiddenTracks).length > 0) {			
 			$('.show-hidden').fadeIn();
 			populateHiddenList();
@@ -138,25 +180,6 @@ if (jQuery) {
 			hideSongList();
 			$('a.show-hidden').slideUp();
 		}
-	}
-
-	//Probably not needed, but this looks prettier in the code than the jQuery method 
-	function nextSong() {
-		$('.playControls .skipControl__next').trigger('click');
-	}
-
-	//Checks to see if the current song is hidden or not, if it is, it skips to the next song
-	function currSongIsHidden() {
-		var listItem, group, button;
-
-		button = $(document).find('li.soundList__item button[title="Pause"]');
-
-		if (button) listItem = button.closest('li.soundList__item');
-		if (listItem) group = listItem.find('div[role="group"]');
-		if (group) songName = group.attr('aria-label');
-
-		if(songName != undefined && songName in hiddenTracks)
-			nextSong();
 	}
 	
 	function populateHiddenList() {
