@@ -9,53 +9,15 @@ var trackInfo = {
 	url: ""
 };
 
-function isTrackHidden(trackUrl) {
-	return (trackUrl && parsePlaylistHref(trackUrl) in hiddenTracks)
-}
-
-function parsePlaylistHref(href) {
-	return href.indexOf("?in=") > -1 ? (href.split("?in=")[1][0] !== '/') ? '/' + href.split("?in=")[1] : href.split("?in=")[1] : href;
-}
-
-function skipControl() {
-	return trackInfo.skipBack ? $('.playControls .skipControl__previous') : $('.playControls .skipControl__next');
-}
-
-var playingObserver = new MutationObserver(function(mutations) {
-	mutations.forEach(function(mutation) {
-
-		trackInfo.element = document.querySelector('.playbackSoundBadge__title');
-
-		// Only check hidden tracks if songTitle is a descendant
-		// of the mutation target element.
-		if($.contains(mutation.target, trackInfo.element)) {
-			trackInfo.url = $(trackInfo.element).attr('href');
-
-			if(isTrackHidden(trackInfo.url)) {
-				skipControl().trigger("click");
-			} else {
-				trackInfo.skipBack = false;
-			}
-		}
-	});
-});
-
-
-var currentPlaying = document.querySelector('.playControls');					
-playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
-
-
 var songList = document.createElement('ul');
-$(songList).addClass('hidden-songs');
 
 if (jQuery) {
 	$(document).ready(function(){
-
+		$(songList).addClass('hidden-songs');
+		$('body').append(songList);
+		showBtn();
 		//Get number of visible tracks
 		numVisible = $('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item:visible').length;
-		showBtn();
-
-		$('body').append(songList);
 		
 		//Loop through all visible items, 4500 seems acceptably slow for soundcloud ajax requests		
 		setTimeout(iterateItems, 1500);
@@ -80,8 +42,7 @@ if (jQuery) {
 
 
 		$('.playControls .skipControl__previous').on('click', function() { trackInfo.skipBack = true; });
-
-
+		
 		if (Object.keys(hiddenTracks).length > 0) {			
 			$('.show-hidden').fadeIn();
 			populateHiddenList();
@@ -136,8 +97,6 @@ if (jQuery) {
 	}
 
 	//Hides the track and adds the track name to the localStorage object
-
-
 	function hideTrack(e) {
 		var href, listItem, songName;
 		href = e.attr('data-href');
@@ -151,6 +110,11 @@ if (jQuery) {
 		localStorage.hiddenTracks = JSON.stringify(hiddenTracks);
 		populateHiddenList();
 		$('a.show-hidden').slideDown();
+		
+		if (trackInfo.url == href) {
+			nextSong();
+		}
+		
 	}
 	
 	function unhideTrack(href, songName) {
@@ -182,6 +146,43 @@ if (jQuery) {
 			$(songList).append(li);				
 		}
 	}
+	
+	function isTrackHidden(trackUrl) {
+		return (trackUrl && parsePlaylistHref(trackUrl) in hiddenTracks)
+	}
+
+	function parsePlaylistHref(href) {
+		return href.indexOf("?in=") > -1 ? (href.split("?in=")[1][0] !== '/') ? '/' + href.split("?in=")[1] : href.split("?in=")[1] : href;
+	}
+
+	function skipControl() {
+		return trackInfo.skipBack ? $('.playControls .skipControl__previous') : $('.playControls .skipControl__next');
+	}
+	
+	function nextSong() {
+		$('.skipControl__next').click();
+	}
+	
+	var playingObserver = new MutationObserver(function(mutations) {
+		mutations.forEach(function(mutation) {
+
+			trackInfo.element = document.querySelector('.playbackSoundBadge__title');
+
+			// Only check hidden tracks if songTitle is a descendant
+			// of the mutation target element.
+			if($.contains(mutation.target, trackInfo.element)) {
+				trackInfo.url = $(trackInfo.element).attr('href');
+
+				if(isTrackHidden(trackInfo.url)) {
+					skipControl().trigger("click");
+				} else {
+					trackInfo.skipBack = false;
+				}
+			}
+		});
+	});
+	var currentPlaying = document.querySelector('.playControls');					
+	playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
 } else {
 	console.log('Hidecloud is not active');
 }
