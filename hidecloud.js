@@ -1,25 +1,45 @@
 //Set ext scope variables
-var hiddenTracks, numVisible; 
+var hiddenTracks, numVisible;
 hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
+// details about the current track
+var trackInfo = {
+	element: {},
+	title: "",
+	url: ""
+};
+
+function isTrackHidden(trackUrl) {
+	return (trackUrl && parsePlaylistHref(trackUrl) in hiddenTracks)
+}
 
 function parsePlaylistHref(href) {
-	var isInPlayList = href.indexOf("?in=") > -1;
-	if(isInPlayList) { // Determine if the track is part of a hidden playlist
-		href = href.split("?in=")[1]; // Grab the playlist name
-		href = (href[0] !== '/') ? '/' + href : href; // Add a leading '/' in case one doesn't exist
-	}
-	return href;
+	return href.indexOf("?in=") > -1 ? (href.split("?in=")[1][0] !== '/') ? '/' + href.split("?in=")[1] : href.split("?in=")[1] : href;
+}
+
+function skipControl() {
+	return trackInfo.skipBack ? $('.playControls .skipControl__previous') : $('.playControls .skipControl__next');
 }
 
 var playingObserver = new MutationObserver(function(mutations) {
 	mutations.forEach(function(mutation) {
-		var href =$('.playbackSoundBadge__title').attr('href');
-		if(href && parsePlaylistHref(href) in hiddenTracks) {
-			nextSong();
+
+		trackInfo.element = document.querySelector('.playbackSoundBadge__title');
+
+		// Only check hidden tracks if songTitle is a descendant
+		// of the mutation target element.
+		if($.contains(mutation.target, trackInfo.element)) {
+			trackInfo.url = $(trackInfo.element).attr('href');
+
+			if(isTrackHidden(trackInfo.url)) {
+				skipControl().trigger("click");
+			} else {
+				trackInfo.skipBack = false;
+			}
 		}
 	});
 });
+
 
 var currentPlaying = document.querySelector('.playControls');					
 playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
@@ -29,7 +49,8 @@ var songList = document.createElement('ul');
 $(songList).addClass('hidden-songs');
 
 if (jQuery) {
-	$(document).ready(function(){		
+	$(document).ready(function(){
+
 		//Get number of visible tracks
 		numVisible = $('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item:visible').length;
 		showBtn();
@@ -47,7 +68,8 @@ if (jQuery) {
 		$('body').on('click', 'a.unhide-track', function() {
 			unhideTrack($(this).data('href'), $(this).data('track'));
 		});
-		
+
+
 		//Every time you scroll, this checks to see if the saved number of visible tracks is less than what searching the dom comes up with 
 		$(document).scroll(function(){ 
 			if ($('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item').length > numVisible) {
@@ -55,13 +77,18 @@ if (jQuery) {
 				iterateItems(hiddenTracks);
 			}
 		});
-				
+
+
+		$('.playControls .skipControl__previous').on('click', function() { trackInfo.skipBack = true; });
+
+
 		if (Object.keys(hiddenTracks).length > 0) {			
 			$('.show-hidden').fadeIn();
 			populateHiddenList();
 		}
 		
 	});
+
 
 	//Loops through all of the visible items and hides them if localStorage deems them a hidden track
 	function iterateItems() {
@@ -99,7 +126,7 @@ if (jQuery) {
 	});
 	
 	function showSongList() {		
-		$('.hidden-songs').slideDown()
+		$('.hidden-songs').slideDown();
 		$('.show-hidden').text('Hide this list!'); 
 	}
 	
@@ -138,25 +165,6 @@ if (jQuery) {
 			hideSongList();
 			$('a.show-hidden').slideUp();
 		}
-	}
-
-	//Probably not needed, but this looks prettier in the code than the jQuery method 
-	function nextSong() {
-		$('.playControls .skipControl__next').trigger('click');
-	}
-
-	//Checks to see if the current song is hidden or not, if it is, it skips to the next song
-	function currSongIsHidden() {
-		var listItem, group, button;
-
-		button = $(document).find('li.soundList__item button[title="Pause"]');
-
-		if (button) listItem = button.closest('li.soundList__item');
-		if (listItem) group = listItem.find('div[role="group"]');
-		if (group) songName = group.attr('aria-label');
-
-		if(songName != undefined && songName in hiddenTracks)
-			nextSong();
 	}
 	
 	function populateHiddenList() {
