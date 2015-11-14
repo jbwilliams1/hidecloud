@@ -182,7 +182,7 @@ if (jQuery) {
 		});
 	});
 	var currentPlaying = document.querySelector('.playControls');					
-	playingObserver.observe(currentPlaying , { attributes: true, childList: true, characterData: true, subtree : true });
+	playingObserver.observe(currentPlaying , { childList: true, characterData: true, subtree : true });
 } else {
 	console.log('Hidecloud is not active');
 }
