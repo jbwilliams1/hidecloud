@@ -14,12 +14,7 @@ function isTrackHidden(trackUrl) {
 }
 
 function parsePlaylistHref(href) {
-	var isInPlayList = href.indexOf("?in=") > -1;
-	if(isInPlayList) { // Determine if the track is part of a hidden playlist
-		href = href.split("?in=")[1]; // Grab the playlist name
-		href = (href[0] !== '/') ? '/' + href : href; // Add a leading '/' in case one doesn't exist
-	}
-	return href;
+	return href.indexOf("?in=") > -1 ? (href.split("?in=")[1][0] !== '/') ? '/' + href.split("?in=")[1] : href.split("?in=")[1] : href;
 }
 
 function skipControl() {
