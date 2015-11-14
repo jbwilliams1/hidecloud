@@ -6,7 +6,7 @@ hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks)
 var trackInfo = {
 	element: {},
 	title: "",
-	url: ""
+	href: ""
 };
 
 var songList = document.createElement('ul');
@@ -111,7 +111,7 @@ if (jQuery) {
 		populateHiddenList();
 		$('a.show-hidden').slideDown();
 		
-		if (trackInfo.url == href) {
+		if (trackInfo.href == href) {
 			nextSong();
 		}
 		
@@ -171,9 +171,9 @@ if (jQuery) {
 			// Only check hidden tracks if songTitle is a descendant
 			// of the mutation target element.
 			if($.contains(mutation.target, trackInfo.element)) {
-				trackInfo.url = $(trackInfo.element).attr('href');
+				trackInfo.href = $(trackInfo.element).attr('href');
 
-				if(isTrackHidden(trackInfo.url)) {
+				if(isTrackHidden(trackInfo.href)) {
 					skipControl().trigger("click");
 				} else {
 					trackInfo.skipBack = false;
