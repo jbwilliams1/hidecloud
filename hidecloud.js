@@ -1,36 +1,17 @@
 //Set ext scope variables
-var hiddenTracks, numVisible; 
+var hiddenTracks, numVisible;
 hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
-// Keeps tabs on the direction a user is skipping through
-// tracks in their stream.  When it comes time to skip a track,
-// we can decide which button (next/previous) in playControls we
-// want to trigger.
-var TrackSkipper = function() {
-	this.SKIP_FORWARD = 1;
-	this.SKIP_BACKWARD = -1;
-	var _skipDirection = this.SKIP_FORWARD;
-
-	this.setDirectionAsync = function(dir) {
-		return function() {
-			_skipDirection = dir;
-		}
-	};
-
-	this.getDirection = function() {
-		return _skipDirection;
-	};
-
-	this.skip = function() {
-		if(this.getDirection() === this.SKIP_FORWARD) {
-			$('.playControls .skipControl__next').trigger('click');
-		} else {
-			$('.playControls .skipControl__previous').trigger('click');
-		}
-	};
+// details about the current track
+var trackInfo = {
+	element: {},
+	title: "",
+	url: ""
 };
 
-var trackSkipper = new TrackSkipper();
+function isTrackHidden(trackUrl) {
+	return (trackUrl && parsePlaylistHref(trackUrl) in hiddenTracks)
+}
 
 function parsePlaylistHref(href) {
 	var isInPlayList = href.indexOf("?in=") > -1;
@@ -41,16 +22,24 @@ function parsePlaylistHref(href) {
 	return href;
 }
 
+function skipControl() {
+	return trackInfo.skipBack ? $('.playControls .skipControl__previous') : $('.playControls .skipControl__next');
+}
+
 var playingObserver = new MutationObserver(function(mutations) {
 	mutations.forEach(function(mutation) {
-		var songTitle = document.querySelector('.playbackSoundBadge__title');
+
+		trackInfo.element = document.querySelector('.playbackSoundBadge__title');
 
 		// Only check hidden tracks if songTitle is a descendant
 		// of the mutation target element.
-		if($.contains(mutation.target, songTitle)) {
-			var href = $(songTitle).attr('href');
-			if(href && parsePlaylistHref(href) in hiddenTracks) {
-				trackSkipper.skip(); // It's a hidden track, skip it.
+		if($.contains(mutation.target, trackInfo.element)) {
+			trackInfo.url = $(trackInfo.element).attr('href');
+
+			if(isTrackHidden(trackInfo.url)) {
+				skipControl().trigger("click");
+			} else {
+				trackInfo.skipBack = false;
 			}
 		}
 	});
@@ -65,7 +54,8 @@ var songList = document.createElement('ul');
 $(songList).addClass('hidden-songs');
 
 if (jQuery) {
-	$(document).ready(function(){		
+	$(document).ready(function(){
+
 		//Get number of visible tracks
 		numVisible = $('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item:visible').length;
 		showBtn();
@@ -85,7 +75,6 @@ if (jQuery) {
 		});
 
 
-		
 		//Every time you scroll, this checks to see if the saved number of visible tracks is less than what searching the dom comes up with 
 		$(document).scroll(function(){ 
 			if ($('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item').length > numVisible) {
@@ -94,8 +83,8 @@ if (jQuery) {
 			}
 		});
 
-		$('.playControls .skipControl__next').on('click', trackSkipper.setDirectionAsync(trackSkipper.SKIP_FORWARD));
-		$('.playControls .skipControl__previous').on('click', trackSkipper.setDirectionAsync(trackSkipper.SKIP_BACKWARD));
+
+		$('.playControls .skipControl__previous').on('click', function() { trackInfo.skipBack = true; });
 
 
 		if (Object.keys(hiddenTracks).length > 0) {			
@@ -104,6 +93,7 @@ if (jQuery) {
 		}
 		
 	});
+
 
 	//Loops through all of the visible items and hides them if localStorage deems them a hidden track
 	function iterateItems() {
@@ -141,7 +131,7 @@ if (jQuery) {
 	});
 	
 	function showSongList() {		
-		$('.hidden-songs').slideDown()
+		$('.hidden-songs').slideDown();
 		$('.show-hidden').text('Hide this list!'); 
 	}
 	
