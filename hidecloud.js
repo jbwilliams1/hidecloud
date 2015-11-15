@@ -1,6 +1,5 @@
 //Set ext scope variables
-var hiddenTracks, numVisible;
-hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
+var hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
 
 // details about the current track
 var trackInfo = {
@@ -12,15 +11,11 @@ var trackInfo = {
 var songList = document.createElement('ul');
 
 if (jQuery) {
+
 	$(document).ready(function(){
 		$(songList).addClass('hidden-songs');
 		$('body').append(songList);
 		showBtn();
-		//Get number of visible tracks
-		numVisible = $('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item:visible').length;
-		
-		//Loop through all visible items, 4500 seems acceptably slow for soundcloud ajax requests		
-		setTimeout(iterateItems, 1500);
 
 		//On click of hide track button, execute hide track function
 		$('body').on('click', 'a.hide-track', function() {
@@ -31,18 +26,15 @@ if (jQuery) {
 			unhideTrack($(this).data('href'), $(this).data('track'));
 		});
 
+		$('.playControls .skipControl__previous').on('click', function() { trackInfo.skipBack = true; });
 
-		//Every time you scroll, this checks to see if the saved number of visible tracks is less than what searching the dom comes up with 
-		$(document).scroll(function(){ 
-			if ($('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item').length > numVisible) {
-				numVisible = $('ul.lazyLoadingList__list.sc-list-nostyle.sc-clearfix .soundList__item:visible').length;
-				iterateItems(hiddenTracks);
-			}
+
+		$(document).on('lazyLoad', function(e) {
+			$(".soundList__item").toArray().forEach(function(node) {
+				processNewTrack(node);
+			});
 		});
 
-
-		$('.playControls .skipControl__previous').on('click', function() { trackInfo.skipBack = true; });
-		
 		if (Object.keys(hiddenTracks).length > 0) {			
 			$('.show-hidden').fadeIn();
 			populateHiddenList();
@@ -50,25 +42,23 @@ if (jQuery) {
 		
 	});
 
+	// Either add a hide button to the track, or hide the track if localStorage deems it hidden
+	function processNewTrack(trackNode) {
+		var trackDetails = $(trackNode).find("div.sc-media-content").last().children().first(),
+			buttonGroup = $(trackNode).find('div.sc-button-group').first(),
+			trackHref = $(trackDetails).attr("href"),
+			songName = $(trackDetails).find("span").text();
 
-	//Loops through all of the visible items and hides them if localStorage deems them a hidden track
-	function iterateItems() {
-		$('li.soundList__item').each(function() {
-			var listItem, group, songName, buttonGroup, href;
-			listItem = $(this);
 
-			if (listItem) group = $(this).find('div[role="group"]');
-			if (group) { href = group.find('.soundTitle__title').attr('href'); songName = group.attr('aria-label'); }
-			if (listItem) buttonGroup = $(this).find('div.sc-button-group').first();
-	
-			if(href != undefined && hiddenTracks && href in hiddenTracks) 
-				listItem.hide();
-			
+		if(isTrackHidden(trackHref)) {
+			$(trackNode).hide();
+		} else if ($(buttonGroup).find('.hide-track').length == 0) {
+			$(buttonGroup).append("<a class='sc-button hide-track sc-button-small sc-button-responsive' data-track='"+ songName +"' data-href='" + trackHref + "' title='Hide This Track'>HIDE</a>");
+		}
+	}
 
-			if ($(buttonGroup).find('.hide-track').length == 0)
-				$(buttonGroup).append("<a class='sc-button hide-track sc-button-small sc-button-responsive' data-track='"+ songName +"' data-href='" + href + "' title='Hide This Track'>HIDE</a>")
-
-		});
+	function countVisibleTracks() {
+		return $('.soundList__item:visible').length;
 	}
 	
 	function showBtn() {
@@ -85,7 +75,7 @@ if (jQuery) {
 	$('body').on('click', '.show-hidden', function() {
 		$(this).text() === 'You have hidden tracks! Click to see them' ? showSongList() : hideSongList();
 	});
-	
+
 	function showSongList() {		
 		$('.hidden-songs').slideDown();
 		$('.show-hidden').text('Hide this list!'); 
@@ -104,17 +94,20 @@ if (jQuery) {
 		songName = e.attr('data-track');
 		listItem = e.closest('li.soundList__item');
 
-		numVisible--;
 		hiddenTracks[href] = songName;
+
 		listItem.slideUp();
 		localStorage.hiddenTracks = JSON.stringify(hiddenTracks);
 		populateHiddenList();
+
 		$('a.show-hidden').slideDown();
-		
+
 		if (trackInfo.href == href) {
 			nextSong();
 		}
-		
+
+		// If there is only 5 visible tracks left, try loading more
+		countVisibleTracks() <= 5 ? loadMoreTracks() : 0;
 	}
 	
 	function unhideTrack(href, songName) {
@@ -146,6 +139,11 @@ if (jQuery) {
 			$(songList).append(li);				
 		}
 	}
+
+	// Fires off a tiny scroll animation to trigger the stream lazy load
+	function loadMoreTracks() {
+		$('html, body').animate({scrollTop: $(window).scrollTop() + 10}, 10);
+	}
 	
 	function isTrackHidden(trackUrl) {
 		return (trackUrl && parsePlaylistHref(trackUrl) in hiddenTracks)
@@ -162,6 +160,7 @@ if (jQuery) {
 	function nextSong() {
 		$('.skipControl__next').click();
 	}
+
 	
 	var playingObserver = new MutationObserver(function(mutations) {
 		mutations.forEach(function(mutation) {
@@ -181,8 +180,23 @@ if (jQuery) {
 			}
 		});
 	});
-	var currentPlaying = document.querySelector('.playControls');					
+
+	// Watches for node additions to the lazyLoad list
+	var lazyLoadObserver = new MutationObserver(function(mutations) {
+		mutations.forEach(function(mutation) {
+			if(mutation.type === "childList" && mutation.addedNodes.length) {
+				$(document).trigger("lazyLoad");
+			}
+		});
+	});
+
+	var lazyLoadList = document.querySelector('div.lazyLoadingList');
+	var currentPlaying = document.querySelector('.playControls');
+
 	playingObserver.observe(currentPlaying , { childList: true, characterData: true, subtree : true });
+	lazyLoadObserver.observe(lazyLoadList, { childList: true, subtree: true });
+
+
 } else {
 	console.log('Hidecloud is not active');
 }
