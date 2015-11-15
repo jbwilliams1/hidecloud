@@ -19,6 +19,14 @@ if (jQuery) {
 		$('body').append(songList);
 		showBtn();
 
+		var unhideAllBtn = document.createElement('a');
+		$(unhideAllBtn).addClass("unhide-all");
+		$('body').append(unhideAllBtn);
+
+		$(unhideAllBtn).on('open', function() { $(this).show() });
+		$(unhideAllBtn).on('close', function() { $(this).hide() });
+		$(unhideAllBtn).on('click', unhideAllTracks);
+
 		//On click of hide track button, execute hide track function
 		$('body').on('click', 'a.hide-track', function() {
 			hideTrack($(this));
@@ -67,7 +75,7 @@ if (jQuery) {
 	
 	function showBtn() {
 		if ($('.show-hidden') != '') { 
-			var showHiddenBtn = document.createElement('a');		
+			var showHiddenBtn = document.createElement('a');
 			showHiddenBtn.href = "#";
 			$(showHiddenBtn).addClass('show-hidden');			
 			showHiddenBtn.text = "You have hidden tracks! Click to see them";
@@ -75,19 +83,27 @@ if (jQuery) {
 			$('body').append(showHiddenBtn);
 		}
 	}
-	
+
 	$('body').on('click', '.show-hidden', function() {
 		$(this).text() === 'You have hidden tracks! Click to see them' ? showSongList() : hideSongList();
 	});
 
-	function showSongList() {		
+	function showSongList() {
 		$('.hidden-songs').slideDown();
-		$('.show-hidden').text('Hide this list!'); 
+		$('.show-hidden').text('Hide this list!');
+		$('a.unhide-all').trigger('open');
 	}
 	
 	function hideSongList() {
 		$('.hidden-songs').slideUp();
-		$('.show-hidden').text('You have hidden tracks! Click to see them'); 		
+		$('.show-hidden').text('You have hidden tracks! Click to see them');
+		$('a.unhide-all').trigger('close');
+	}
+
+	function unhideAllTracks() {
+		for(href in hiddenTracks) {
+			unhideTrack(href, hiddenTracks[href]);
+		}
 	}
 
 	//Hides the track and adds the track name to the localStorage object
