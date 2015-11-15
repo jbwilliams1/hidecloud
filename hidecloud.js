@@ -8,6 +8,8 @@ var trackInfo = {
 	href: ""
 };
 
+var stream = [];
+
 var songList = document.createElement('ul');
 
 if (jQuery) {
@@ -30,9 +32,10 @@ if (jQuery) {
 
 
 		$(document).on('lazyLoad', function(e) {
-			$(".soundList__item").toArray().forEach(function(node) {
-				processNewTrack(node);
-			});
+			$(".soundList__item")
+				.toArray()
+				.filter(function(node) { return stream.indexOf(node) === -1; })
+				.forEach(function(node) { processTrack(node); });
 		});
 
 		if (Object.keys(hiddenTracks).length > 0) {			
@@ -43,7 +46,7 @@ if (jQuery) {
 	});
 
 	// Either add a hide button to the track, or hide the track if localStorage deems it hidden
-	function processNewTrack(trackNode) {
+	function processTrack(trackNode) {
 		var trackDetails = $(trackNode).find("div.sc-media-content").last().children().first(),
 			buttonGroup = $(trackNode).find('div.sc-button-group').first(),
 			trackHref = $(trackDetails).attr("href"),
@@ -54,6 +57,7 @@ if (jQuery) {
 			$(trackNode).hide();
 		} else if ($(buttonGroup).find('.hide-track').length == 0) {
 			$(buttonGroup).append("<a class='sc-button hide-track sc-button-small sc-button-responsive' data-track='"+ songName +"' data-href='" + trackHref + "' title='Hide This Track'>HIDE</a>");
+			stream.push(trackNode);
 		}
 	}
 
@@ -95,6 +99,7 @@ if (jQuery) {
 		listItem = e.closest('li.soundList__item');
 
 		hiddenTracks[href] = songName;
+		stream = stream.filter(function(node) { return node !== listItem });
 
 		listItem.slideUp();
 		localStorage.hiddenTracks = JSON.stringify(hiddenTracks);
