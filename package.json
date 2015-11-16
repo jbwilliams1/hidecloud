@@ -1,0 +1,17 @@
+{
+  "title": "hidecloud",
+  "name": "hidecloud",
+  "version": "1.2.0",
+  "description": "Use this extension to hide soundcloud tracks in your stream",
+  "main": "index.js",
+  "author": "Jake Williams, Ben Hansen",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "MIT",
+  "keywords": [
+    "jetpack"
+  ],
+  "updateUrl": "https://clients2.google.com/service/update2/crx"
+}
