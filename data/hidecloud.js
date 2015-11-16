@@ -50,8 +50,6 @@ if (jQuery) {
 			$('.show-hidden').fadeIn();
 			populateHiddenList();
 		}
-
-		setTimeout(function() { $(document).trigger("lazyLoad"); }, 2500); // Just in case
 	});
 
 	// Either add a hide button to the track, or hide the track if localStorage deems it hidden
