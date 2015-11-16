@@ -4,7 +4,7 @@
   "version": "1.2.0",
   "description": "Use this extension to hide soundcloud tracks in your stream",
   "main": "index.js",
-  "author": "Jake Williams",
+  "author": "Jake Williams, Ben Hansen",
   "engines": {
     "firefox": ">=38.0a1",
     "fennec": ">=38.0a1"
