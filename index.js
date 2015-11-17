@@ -3,9 +3,7 @@ var pageMod = require("sdk/page-mod");
 
 pageMod.PageMod({
   include: [
-    "https://soundcloud.com/stream#",
-    "https://soundcloud.com/stream",
-    "https://soundcloud.com/*"
+    "https://soundcloud.com/stream*"
   ],
   contentScriptFile: [
     data.url("jquery.js"),
