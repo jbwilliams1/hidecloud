@@ -65,7 +65,8 @@ if (jQuery) {
 		if(isTrackHidden(trackHref)) {
 			$(trackNode).hide();
 		} else if ($(buttonGroup).find('.hide-track').length == 0) {
-			$(buttonGroup).append("<a class='sc-button hide-track sc-button-small sc-button-responsive' data-track='"+ songName +"' data-href='" + trackHref + "' title='Hide This Track'>HIDE</a>");
+			$(buttonGroup).append("<a class='sc-button hide-track sc-button-small sc-button-responsive' data-track='"+ songName +"' data-href='" + trackHref + "' title='Hide This Track'>HIDE</a>").attr("href","");
+
 			stream.push(trackNode);
 		}
 	}
@@ -77,7 +78,6 @@ if (jQuery) {
 	function showBtn() {
 		if ($('.show-hidden') != '') { 
 			var showHiddenBtn = document.createElement('a');
-			showHiddenBtn.href = "#";
 			$(showHiddenBtn).addClass('show-hidden');			
 			showHiddenBtn.text = "You have hidden tracks! Click to see them";
 			
@@ -155,7 +155,7 @@ if (jQuery) {
 			var unhideBtn = document.createElement('a');
 			
 			$(li).text(songName);
-			$(unhideBtn).text("UNHIDE").addClass('unhide-track').attr('style', 'color: red; float: right;').attr('href', '#').attr('data-href', href).attr('data-track', songName);
+			$(unhideBtn).text("UNHIDE").addClass('unhide-track').attr('style', 'color: red; float: right; cursor: pointer;').attr('data-href', href).attr('data-track', songName);
 			$(li).append(unhideBtn);
 
 			$(songList).append(li);				
