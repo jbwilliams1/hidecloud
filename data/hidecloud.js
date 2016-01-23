@@ -1,6 +1,5 @@
 //Set ext scope variables
 var hiddenTracks = localStorage.hiddenTracks ? JSON.parse(localStorage.hiddenTracks) : {};
-
 // details about the current track
 var trackInfo = {
 	element: {},
@@ -56,11 +55,10 @@ if (jQuery) {
 
 	// Either add a hide button to the track, or hide the track if localStorage deems it hidden
 	function processTrack(trackNode) {
-		var trackDetails = $(trackNode).find("div.sc-media-content").last().children().first(),
+		var trackDetails = $(trackNode).find("a.soundTitle__title").first(),
 			buttonGroup = $(trackNode).find('div.sc-button-group').first(),
 			trackHref = $(trackDetails).attr("href"),
 			songName = $(trackDetails).find("span").text();
-
 
 		if(isTrackHidden(trackHref)) {
 			$(trackNode).hide();
