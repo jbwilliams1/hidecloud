@@ -185,7 +185,7 @@ if (jQuery) {
 	var playingObserver = new MutationObserver(function(mutations) {
 		mutations.forEach(function(mutation) {
 
-			trackInfo.element = document.querySelector('.playbackSoundBadge__title');
+			trackInfo.element = document.querySelector('.playbackSoundBadge__titleLink');
 
 			// Only check hidden tracks if songTitle is a descendant
 			// of the mutation target element.
